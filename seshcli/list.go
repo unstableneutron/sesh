@@ -59,13 +59,16 @@ func NewListCommand(base *BaseDeps) *cobra.Command {
 				return nil
 			}
 
-			for _, i := range sessions.OrderedIndex {
-				name := sessions.Directory[i].Name
+			lines := formatListOutput(sessions, icons)
+			for i, index := range sessions.OrderedIndex {
+				name := lines[i]
 				if icons {
+					session := sessions.Directory[index]
+					session.Name = name
 					if noColor {
-						name = deps.Icon.AddIconNoColor(sessions.Directory[i])
+						name = deps.Icon.AddIconNoColor(session)
 					} else {
-						name = deps.Icon.AddIcon(sessions.Directory[i])
+						name = deps.Icon.AddIcon(session)
 					}
 				}
 				fmt.Println(name)
@@ -87,4 +90,41 @@ func NewListCommand(base *BaseDeps) *cobra.Command {
 	cmd.Flags().BoolP("hide-duplicates", "d", false, "hide duplicate entries")
 
 	return cmd
+}
+
+func formatListOutput(sessions model.SeshSessions, _ bool) []string {
+	collisionNames := backendCollisionNames(sessions)
+	lines := make([]string, 0, len(sessions.OrderedIndex))
+	for _, index := range sessions.OrderedIndex {
+		session := sessions.Directory[index]
+		name := session.Name
+		if collisionNames[session.Name] && session.Backend != "" {
+			name = fmt.Sprintf("%s [%s]", session.Name, session.Backend)
+		}
+		lines = append(lines, name)
+	}
+	return lines
+}
+
+func backendCollisionNames(sessions model.SeshSessions) map[string]bool {
+	backendByName := make(map[string]map[model.Backend]struct{})
+	for _, index := range sessions.OrderedIndex {
+		session := sessions.Directory[index]
+		if session.Backend == "" {
+			continue
+		}
+		if _, ok := backendByName[session.Name]; !ok {
+			backendByName[session.Name] = make(map[model.Backend]struct{})
+		}
+		backendByName[session.Name][session.Backend] = struct{}{}
+	}
+
+	collisionNames := make(map[string]bool)
+	for name, backends := range backendByName {
+		if len(backends) > 1 {
+			collisionNames[name] = true
+		}
+	}
+
+	return collisionNames
 }

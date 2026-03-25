@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/joshmedeski/sesh/v2/model"
 )
@@ -33,9 +34,27 @@ func testFetchFunc(sessions model.SeshSessions) FetchFunc {
 	}
 }
 
+func duplicateBackendSessions() model.SeshSessions {
+	dir := model.SeshSessionMap{
+		"tmux:work": {Name: "work", Src: "tmux", Backend: model.BackendTmux, Path: "/tmp/work"},
+		"zmx:work":  {Name: "work", Src: "zmx", Backend: model.BackendZmx, Path: "/tmp/work-zmx"},
+	}
+	return model.SeshSessions{
+		OrderedIndex: []string{"tmux:work", "zmx:work"},
+		Directory:    dir,
+	}
+}
+
 // newTestModel creates a model and simulates the async load completing.
 func newTestModel() Model {
 	sessions := testSessions()
+	m := New(testFetchFunc(sessions), false, false)
+	result, _ := m.Update(sessionsLoadedMsg{sessions: sessions})
+	return result.(Model)
+}
+
+func newDuplicateBackendModel() Model {
+	sessions := duplicateBackendSessions()
 	m := New(testFetchFunc(sessions), false, false)
 	result, _ := m.Update(sessionsLoadedMsg{sessions: sessions})
 	return result.(Model)
@@ -176,6 +195,20 @@ func TestUpdate_Enter_SelectsSession(t *testing.T) {
 	assert.Equal(t, "dotfiles", resultModel.Chosen())
 }
 
+func TestUpdate_Enter_PreservesBackendIdentity(t *testing.T) {
+	m := newDuplicateBackendModel()
+	m.height = 30
+
+	m.cursorDown(1)
+	result, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	resultModel := result.(Model)
+
+	chosen, ok := resultModel.ChosenSession()
+	require.True(t, ok)
+	assert.Equal(t, model.BackendZmx, chosen.Backend)
+	assert.Equal(t, "work", chosen.Name)
+}
+
 func TestUpdate_Enter_ReturnsRawName(t *testing.T) {
 	m := newTestModel()
 	m.height = 30
@@ -303,6 +336,18 @@ func TestView_ReturnsNonEmpty(t *testing.T) {
 
 	v := m.View()
 	assert.NotZero(t, v)
+}
+
+func TestView_DuplicateNames_ShowBackendTag(t *testing.T) {
+	m := newDuplicateBackendModel()
+	match := lipgloss.NewStyle().Bold(true)
+	normal := lipgloss.NewStyle()
+
+	first := m.displayName(m.filtered[0], match, normal)
+	second := m.displayName(m.filtered[1], match, normal)
+
+	assert.Contains(t, first, "work [tmux]")
+	assert.Contains(t, second, "work [zmx]")
 }
 
 func TestView_LoadingState(t *testing.T) {

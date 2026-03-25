@@ -69,11 +69,21 @@ func NewPickerCommand(base *BaseDeps) *cobra.Command {
 				return fmt.Errorf("couldn't list sessions: %w", pickerModel.LoadErr())
 			}
 
-			if pickerModel.Quit() || pickerModel.Chosen() == "" {
+			if pickerModel.Quit() {
 				return nil
 			}
 
-			if _, err := deps.Connector.Connect(pickerModel.Chosen(), model.ConnectOpts{}); err != nil {
+			chosenSession, ok := pickerModel.ChosenSession()
+			if !ok {
+				return nil
+			}
+
+			connectOpts := model.ConnectOpts{
+				Backend:    chosenSession.Backend,
+				SourceHint: chosenSession.Src,
+			}
+
+			if _, err := deps.Connector.Connect(chosenSession.Name, connectOpts); err != nil {
 				return err
 			}
 

@@ -19,6 +19,7 @@ type sessionItem struct {
 	name       string // raw session name (no icons/ANSI)
 	searchName string // normalized name used for fuzzy matching
 	src        string // source type (tmux, config, zoxide, tmuxinator)
+	backend    model.Backend
 }
 
 // sessionItems implements fuzzy.Source for fuzzy matching.
@@ -50,6 +51,9 @@ type Model struct {
 	width          int
 	height         int
 	chosen         string
+	chosenSession  model.SeshSession
+	hasChosen      bool
+	taggedNames    map[string]bool
 	quit           bool
 	showIcons      bool
 	separatorAware bool
@@ -95,9 +99,31 @@ func buildItems(sessions model.SeshSessions, separatorAware bool) sessionItems {
 			name:       s.Name,
 			searchName: searchName,
 			src:        s.Src,
+			backend:    s.Backend,
 		})
 	}
 	return items
+}
+
+func backendCollisionNames(items sessionItems) map[string]bool {
+	backendByName := make(map[string]map[model.Backend]struct{})
+	for _, item := range items {
+		if item.backend == "" {
+			continue
+		}
+		if _, ok := backendByName[item.name]; !ok {
+			backendByName[item.name] = make(map[model.Backend]struct{})
+		}
+		backendByName[item.name][item.backend] = struct{}{}
+	}
+
+	tagged := make(map[string]bool)
+	for name, backends := range backendByName {
+		if len(backends) > 1 {
+			tagged[name] = true
+		}
+	}
+	return tagged
 }
 
 func New(fetchFunc FetchFunc, showIcons bool, separatorAware bool) Model {
@@ -136,6 +162,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.loading = false
 		m.allItems = buildItems(msg.sessions, m.separatorAware)
+		m.taggedNames = backendCollisionNames(m.allItems)
 		m.applyFilter()
 		return m, nil
 
@@ -154,6 +181,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(m.filtered) > 0 {
 				selected := m.filtered[m.cursor]
 				m.chosen = selected.item.name
+				m.chosenSession = selected.item.session
+				m.hasChosen = true
 			}
 			return m, tea.Quit
 
@@ -309,7 +338,7 @@ func (m Model) View() tea.View {
 				iconStyle := lipgloss.NewStyle().Foreground(clr)
 				tag = iconStyle.Render(icn)
 			}
-			name := highlightMatches(item.item.name, item.matchedIndexes, matchStyle, normalStyle)
+			name := m.displayName(item, matchStyle, normalStyle)
 
 			b.WriteString(fmt.Sprintf("%s%s%s\n", prefix, tag, name))
 		}
@@ -323,6 +352,14 @@ func (m Model) View() tea.View {
 	content := b.String()
 
 	return tea.NewView(content)
+}
+
+func (m Model) displayName(item filteredItem, matchStyle, normalStyle lipgloss.Style) string {
+	name := highlightMatches(item.item.name, item.matchedIndexes, matchStyle, normalStyle)
+	if m.taggedNames[item.item.name] && item.item.backend != "" {
+		return fmt.Sprintf("%s [%s]", name, item.item.backend)
+	}
+	return name
 }
 
 func highlightMatches(s string, indexes []int, matchStyle, normalStyle lipgloss.Style) string {
@@ -349,6 +386,12 @@ func highlightMatches(s string, indexes []int, matchStyle, normalStyle lipgloss.
 }
 
 func (m Model) Chosen() string { return m.chosen }
+func (m Model) ChosenSession() (model.SeshSession, bool) {
+	if !m.hasChosen {
+		return model.SeshSession{}, false
+	}
+	return m.chosenSession, true
+}
 func (m Model) Quit() bool     { return m.quit }
 func (m Model) LoadErr() error { return m.loadErr }
 func (m Model) Loading() bool  { return m.loading }
