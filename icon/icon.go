@@ -24,6 +24,7 @@ func NewIcon(config model.Config) Icon {
 var (
 	zoxideIcon     string = ""
 	tmuxIcon       string = ""
+	zmxIcon        string = ""
 	configIcon     string = ""
 	tmuxinatorIcon string = ""
 )
@@ -37,11 +38,11 @@ type Glyph struct {
 // Glyphs maps session source names to their icon and color.
 var Glyphs = map[string]Glyph{
 	"tmux":       {Icon: tmuxIcon, ColorCode: 34},
+	"zmx":        {Icon: zmxIcon, ColorCode: 35},
 	"config":     {Icon: configIcon, ColorCode: 90},
 	"zoxide":     {Icon: zoxideIcon, ColorCode: 36},
 	"tmuxinator": {Icon: tmuxinatorIcon, ColorCode: 33},
 }
-
 
 func ansiString(code int, s string) string {
 	return fmt.Sprintf("\033[%dm%s\033[39m", code, s)
@@ -62,7 +63,7 @@ func (i *RealIcon) AddIconNoColor(s model.SeshSession) string {
 }
 
 func (i *RealIcon) RemoveIcon(name string) string {
-	if strings.HasPrefix(name, tmuxIcon) || strings.HasPrefix(name, zoxideIcon) || strings.HasPrefix(name, configIcon) || strings.HasPrefix(name, tmuxinatorIcon) {
+	if strings.HasPrefix(name, tmuxIcon) || strings.HasPrefix(name, zmxIcon) || strings.HasPrefix(name, zoxideIcon) || strings.HasPrefix(name, configIcon) || strings.HasPrefix(name, tmuxinatorIcon) {
 		return name[4:]
 	}
 	return name

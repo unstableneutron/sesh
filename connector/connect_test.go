@@ -5,6 +5,7 @@ import (
 
 	"github.com/joshmedeski/sesh/v2/dir"
 	"github.com/joshmedeski/sesh/v2/home"
+	"github.com/joshmedeski/sesh/v2/kitty"
 	"github.com/joshmedeski/sesh/v2/lister"
 	"github.com/joshmedeski/sesh/v2/model"
 	"github.com/joshmedeski/sesh/v2/namer"
@@ -25,6 +26,7 @@ type connectorDeps struct {
 	startup    *startup.MockStartup
 	tmux       *tmux.MockTmux
 	zmx        *zmx.MockZmx
+	kitty      *kitty.MockKitty
 	zoxide     *zoxide.MockZoxide
 	tmuxinator *tmuxinator.MockTmuxinator
 }
@@ -38,6 +40,7 @@ func newConnectorDeps(t *testing.T) connectorDeps {
 		startup:    new(startup.MockStartup),
 		tmux:       new(tmux.MockTmux),
 		zmx:        zmx.NewMockZmx(t),
+		kitty:      kitty.NewMockKitty(t),
 		zoxide:     new(zoxide.MockZoxide),
 		tmuxinator: new(tmuxinator.MockTmuxinator),
 	}
@@ -53,6 +56,7 @@ func newTestConnector(config model.Config, deps connectorDeps) *RealConnector {
 		startup:    deps.startup,
 		tmux:       deps.tmux,
 		zmx:        deps.zmx,
+		kitty:      deps.kitty,
 		zoxide:     deps.zoxide,
 		tmuxinator: deps.tmuxinator,
 	}
@@ -62,8 +66,9 @@ func TestConnect_PrefersContextBackendOnNameCollision(t *testing.T) {
 	deps := newConnectorDeps(t)
 	c := newTestConnector(model.Config{DefaultBackend: model.BackendTmux}, deps)
 
-	deps.tmux.On("IsAttached").Return(false).Once()
-	deps.zmx.EXPECT().IsAttached().Return(true).Twice()
+	deps.tmux.On("IsAttached").Return(false).Twice()
+	deps.zmx.EXPECT().IsAttached().Return(true).Times(2)
+	deps.zmx.EXPECT().IsAttached().Return(false).Once()
 	deps.zmx.EXPECT().CurrentSessionName().Return("other").Once()
 
 	deps.lister.EXPECT().FindTmuxSession("work").Return(model.SeshSession{Src: "tmux", Backend: model.BackendTmux, Name: "work", Path: "/tmp/work"}, true).Once()
@@ -97,8 +102,8 @@ func TestConnect_ConfigWildcard_RespectsBackendCompatibility(t *testing.T) {
 	deps := newConnectorDeps(t)
 	c := newTestConnector(model.Config{DefaultBackend: model.BackendTmux}, deps)
 
-	deps.tmux.On("IsAttached").Return(false).Once()
-	deps.zmx.EXPECT().IsAttached().Return(false).Twice()
+	deps.tmux.On("IsAttached").Return(false).Twice()
+	deps.zmx.EXPECT().IsAttached().Return(false).Times(3)
 
 	name := "~/code/project"
 	deps.lister.EXPECT().FindTmuxSession(name).Return(model.SeshSession{}, false).Once()
@@ -106,6 +111,7 @@ func TestConnect_ConfigWildcard_RespectsBackendCompatibility(t *testing.T) {
 	deps.lister.EXPECT().FindTmuxinatorConfig(name).Return(model.SeshSession{}, false).Once()
 	deps.lister.EXPECT().FindConfigSession(name).Return(model.SeshSession{}, false).Once()
 	deps.lister.EXPECT().FindConfigWildcard(name).Return(model.WildcardConfig{Pattern: "~/code/*"}, true).Once()
+	deps.lister.EXPECT().FindConfigWildcard("/Users/test/code/project").Return(model.WildcardConfig{Pattern: "~/code/*"}, true).Once()
 	deps.home.On("ExpandHome", name).Return("/Users/test/code/project", nil).Twice()
 	deps.dir.On("Dir", "/Users/test/code/project").Return(true, "/Users/test/code/project").Twice()
 	deps.namer.On("Name", "/Users/test/code/project").Return("project", nil).Twice()

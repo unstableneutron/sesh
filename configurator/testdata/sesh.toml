@@ -1,3 +1,5 @@
+default_backend = "tmux"
+
 [default_session]
 startup_command = "echo test"
 

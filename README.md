@@ -22,7 +22,7 @@
 
 </div>
 
-Sesh is a CLI that helps you create and manage tmux sessions quickly and easily using zoxide.
+Sesh is a CLI that helps you create and manage terminal sessions (tmux and zmx) quickly and easily using zoxide.
 
 <div style="width:50%">
   <a href="https://youtu.be/-yX3GjZfb5Y?si=iFG8qNro1hmZjJFY" target="_blank">
@@ -30,7 +30,7 @@ Sesh is a CLI that helps you create and manage tmux sessions quickly and easily 
   </a>
 </div>
 
-Watch the video to learn more about how to use sesh to manage your tmux sessions.
+Watch the video to learn more about how to use sesh to manage your sessions.
 
 ## How to install
 
@@ -210,7 +210,7 @@ Create an action directly on $XDG_CONFIG_HOME/config.toml
 [[plugins]]
 name = "sesh"
 prefix = ";s "
-src_once = "sesh list -d -c -t -T"
+src_once = "sesh list -d -c -t -x -T"
 cmd = "sesh connect --switch %RESULT%"
 keep_sort = false
 recalculate_score = true
@@ -234,13 +234,24 @@ ssession=$(sesh l -t -T -d -H | walker -d -f -k -p "Sesh sessions"); sesh cn --s
 
 [tmux](https://github.com/tmux/tmux) is a powerful terminal multiplexer that allows you to create and manage multiple terminal sessions. Sesh is designed to make managing tmux sessions easier.
 
+### zmx for sessions
+
+zmx is also supported as a first-class session backend. Use `sesh list -x` to list zmx sessions and `sesh connect --backend zmx <name>` to explicitly target zmx.
+
 ### zoxide for directories
 
 [zoxide](https://github.com/ajeetdsouza/zoxide) is a blazing fast alternative to `cd` that tracks your most used directories. Sesh uses zoxide to manage your projects. You'll have to set up zoxide first, but once you do, you can use it to quickly jump to your most used directories.
 
 ### Basic usage
 
-Once tmux and zoxide are setup, `sesh list` will list all your tmux sessions and zoxide results, and `sesh connect {session}` will connect to a session (automatically creating it if it doesn't exist yet). It is best used by integrating it into your shell and tmux.
+Once tmux/zmx and zoxide are setup, `sesh list` will list tmux sessions, zmx sessions, configured sessions, and zoxide results. `sesh connect {session}` will connect to a session (automatically creating it if it doesn't exist yet).
+
+```sh
+sesh list -x                        # list only zmx sessions
+sesh connect --backend zmx work     # connect or create in zmx explicitly
+```
+
+Sesh is best used by integrating it into your shell and tmux.
 
 #### fzf
 
@@ -463,19 +474,29 @@ sort_order = [
     "tmuxinator", # show first
     "config",
     "tmux",
+    "zmx",
     "zoxide", # show last
 ]
 ```
 
-The default order is `tmux`, `config`, `tmuxinator`, and then `zoxide`.
+The default order is `tmux`, `zmx`, `config`, `tmuxinator`, and then `zoxide`.
 
 You can omit session types if you only care about the order of specific ones.
 
 ```toml
 sort_order = [
-  "config", # resulting order: config, tmux, tmuxinator, zoxide
+  "config", # resulting order: config, tmux, zmx, tmuxinator, zoxide
 ]
 ```
+
+### Default Backend
+
+When a connect target can resolve to either backend, you can control the default tie-break behavior with `default_backend`.
+
+```toml
+default_backend = "tmux" # or "zmx"
+```
+
 ### Cache
 
 Sesh can cache session lists to speed up repeated calls. Caching is opt-in and disabled by default. When enabled, sesh stores results at `$XDG_CACHE_HOME/sesh/sessions.gob` (default `~/.cache/sesh/sessions.gob`) and uses a stale-while-revalidate strategy with a 5-second TTL:

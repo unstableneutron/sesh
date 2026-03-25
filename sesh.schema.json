@@ -15,6 +15,15 @@
       "description": "Disallow unknown fields in the configuration file",
       "default": false
     },
+    "default_backend": {
+      "type": "string",
+      "description": "Default backend used when a session name resolves to multiple backends",
+      "enum": [
+        "tmux",
+        "zmx"
+      ],
+      "default": "tmux"
+    },
     "import": {
       "type": "array",
       "description": "Paths to additional config files to import (supports ~ for home directory)",

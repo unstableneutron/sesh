@@ -17,6 +17,13 @@ func tmuxStrategy(c *RealConnector, name string) (model.Connection, error) {
 }
 
 func connectToTmux(c *RealConnector, connection model.Connection, opts model.ConnectOpts) (string, error) {
+	if c.zmx != nil && c.zmx.IsAttached() {
+		if opts.BypassHandoff {
+			return "", manualZmxHandoffError("handoff replay marker is set", connection.Session.Name, model.BackendTmux, opts, nil)
+		}
+		return queueKittyHandoff(c, connection.Session.Name, model.BackendTmux, opts)
+	}
+
 	if connection.New {
 		c.tmux.NewSession(connection.Session.Name, connection.Session.Path)
 		if opts.Command != "" {

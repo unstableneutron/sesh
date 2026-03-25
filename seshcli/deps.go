@@ -17,6 +17,7 @@ import (
 	"github.com/joshmedeski/sesh/v2/home"
 	"github.com/joshmedeski/sesh/v2/icon"
 	"github.com/joshmedeski/sesh/v2/json"
+	"github.com/joshmedeski/sesh/v2/kitty"
 	"github.com/joshmedeski/sesh/v2/lister"
 	"github.com/joshmedeski/sesh/v2/ls"
 	"github.com/joshmedeski/sesh/v2/model"
@@ -48,6 +49,7 @@ type BaseDeps struct {
 	Dir        dir.Dir
 	Tmux       tmux.Tmux
 	Zmx        zmx.Zmx
+	Kitty      kitty.Kitty
 	Zoxide     zoxide.Zoxide
 	Tmuxinator tmuxinator.Tmuxinator
 }
@@ -82,6 +84,7 @@ func NewBaseDeps() *BaseDeps {
 	d := dir.NewDir(os, g, path)
 	t := tmux.NewTmux(os, sh)
 	zm := zmx.NewZmx(os, sh)
+	k := kitty.NewKitty(os, sh)
 	z := zoxide.NewZoxide(sh)
 	ti := tmuxinator.NewTmuxinator(sh)
 
@@ -98,6 +101,7 @@ func NewBaseDeps() *BaseDeps {
 		Dir:        d,
 		Tmux:       t,
 		Zmx:        zm,
+		Kitty:      k,
 		Zoxide:     z,
 		Tmuxinator: ti,
 	}
@@ -125,7 +129,7 @@ func (b *BaseDeps) BuildAll(configPath string) (*Deps, error) {
 
 	s := startup.NewStartup(config, usedLister, b.Tmux, b.Home, b.Replacer)
 	n := namer.NewNamer(b.Path, b.Git, b.Home, config)
-	c := connector.NewConnector(config, b.Dir, b.Home, usedLister, n, s, b.Tmux, b.Zmx, b.Zoxide, b.Tmuxinator)
+	c := connector.NewConnector(config, b.Dir, b.Home, usedLister, n, s, b.Tmux, b.Zmx, b.Kitty, b.Zoxide, b.Tmuxinator)
 	ic := icon.NewIcon(config)
 	p := previewer.NewPreviewer(usedLister, b.Tmux, ic, b.Dir, b.Home, l, config, b.Shell)
 	cl := cloner.NewCloner(c, b.Git)

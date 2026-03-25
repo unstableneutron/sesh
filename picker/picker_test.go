@@ -79,7 +79,7 @@ func TestNew_StartsInLoadingState(t *testing.T) {
 }
 
 func TestSrcIcon(t *testing.T) {
-	for _, src := range []string{"tmux", "config", "zoxide", "tmuxinator"} {
+	for _, src := range []string{"tmux", "zmx", "config", "zoxide", "tmuxinator"} {
 		icn, clr := srcIcon(src)
 		assert.NotEmpty(t, icn, "icon for %s should not be empty", src)
 		assert.NotEqual(t, "? ", icn, "icon for %s should not be fallback", src)

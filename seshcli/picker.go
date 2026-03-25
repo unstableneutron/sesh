@@ -78,9 +78,18 @@ func NewPickerCommand(base *BaseDeps) *cobra.Command {
 				return nil
 			}
 
+			configPath, _ := cmd.Root().PersistentFlags().GetString("config")
+			kittyWindowID := ""
+			if base != nil && base.Os != nil {
+				kittyWindowID = base.Os.Getenv("KITTY_WINDOW_ID")
+			}
+
 			connectOpts := model.ConnectOpts{
-				Backend:    chosenSession.Backend,
-				SourceHint: chosenSession.Src,
+				Backend:       chosenSession.Backend,
+				SourceHint:    chosenSession.Src,
+				ReplayName:    chosenSession.Name,
+				ConfigPath:    configPath,
+				KittyWindowID: kittyWindowID,
 			}
 
 			if _, err := deps.Connector.Connect(chosenSession.Name, connectOpts); err != nil {

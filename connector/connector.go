@@ -3,6 +3,7 @@ package connector
 import (
 	"github.com/joshmedeski/sesh/v2/dir"
 	"github.com/joshmedeski/sesh/v2/home"
+	"github.com/joshmedeski/sesh/v2/kitty"
 	"github.com/joshmedeski/sesh/v2/lister"
 	"github.com/joshmedeski/sesh/v2/model"
 	"github.com/joshmedeski/sesh/v2/namer"
@@ -26,6 +27,7 @@ type RealConnector struct {
 	startup    startup.Startup
 	tmux       tmux.Tmux
 	zmx        zmx.Zmx
+	kitty      kitty.Kitty
 	zoxide     zoxide.Zoxide
 	tmuxinator tmuxinator.Tmuxinator
 }
@@ -39,6 +41,7 @@ func NewConnector(
 	startup startup.Startup,
 	tmux tmux.Tmux,
 	zmx zmx.Zmx,
+	kitty kitty.Kitty,
 	zoxide zoxide.Zoxide,
 	tmuxinator tmuxinator.Tmuxinator,
 ) Connector {
@@ -51,6 +54,7 @@ func NewConnector(
 		startup,
 		tmux,
 		zmx,
+		kitty,
 		zoxide,
 		tmuxinator,
 	}

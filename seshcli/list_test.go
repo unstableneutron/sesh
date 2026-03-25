@@ -7,6 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestListCommand_HasZmxFlag(t *testing.T) {
+	cmd := NewListCommand(&BaseDeps{})
+	flag := cmd.Flags().Lookup("zmx")
+	if assert.NotNil(t, flag) {
+		assert.Equal(t, "x", flag.Shorthand)
+	}
+}
+
 func TestListOutput_DuplicateNames_ShowBackendTag(t *testing.T) {
 	sessions := model.SeshSessions{
 		OrderedIndex: []string{"tmux:work", "zmx:work", "config:docs"},
