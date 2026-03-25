@@ -10,6 +10,7 @@ func tmuxStrategy(c *RealConnector, name string) (model.Connection, error) {
 	return model.Connection{
 		Found:       true,
 		Session:     session,
+		Backend:     model.BackendTmux,
 		New:         false,
 		AddToZoxide: true,
 	}, nil

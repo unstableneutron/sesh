@@ -13,6 +13,7 @@ func tmuxinatorStrategy(c *RealConnector, name string) (model.Connection, error)
 	return model.Connection{
 		Found:       true,
 		Session:     session,
+		Backend:     model.BackendTmux,
 		New:         true,
 		AddToZoxide: false,
 	}, nil
