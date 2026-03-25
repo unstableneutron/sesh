@@ -12,9 +12,10 @@ type (
 	SeshWindowMap  map[string]WindowConfig
 
 	SeshSession struct {
-		Src  string // The source of the session (config, tmux, zoxide, tmuxinator)
-		Name string // The display name
-		Path string // The absolute directory path
+		Src     string  // The source of the session (config, tmux, zoxide, tmuxinator)
+		Backend Backend // The backend runtime for connecting (tmux, zmx)
+		Name    string  // The display name
+		Path    string  // The absolute directory path
 
 		StartupCommand        string         // The command to run when the session is started
 		PreviewCommand        string         // The command to run when the session is previewed
@@ -30,6 +31,7 @@ type (
 	SeshSrcs struct {
 		Config     bool
 		Tmux       bool
+		Zmx        bool
 		Tmuxinator bool
 		Zoxide     bool
 	}

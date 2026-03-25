@@ -111,10 +111,17 @@ func (c *RealConfigurator) resolveImports(config *model.Config, homeDir string) 
 	return nil
 }
 
-func (c *RealConfigurator) applyDefaults(config *model.Config) {
+func (c *RealConfigurator) applyDefaults(config *model.Config) error {
 	if config.DirLength < 1 {
 		config.DirLength = 1
 	}
+	if config.DefaultBackend == "" {
+		config.DefaultBackend = model.BackendTmux
+	}
+	if !config.DefaultBackend.IsValid() {
+		return fmt.Errorf("invalid default_backend %q: allowed values are tmux or zmx", config.DefaultBackend)
+	}
+	return nil
 }
 
 func (c *RealConfigurator) getConfigFileFromPath(configPath string) (model.Config, error) {
@@ -137,7 +144,9 @@ func (c *RealConfigurator) getConfigFileFromPath(configPath string) (model.Confi
 		return config, err
 	}
 
-	c.applyDefaults(&config)
+	if err := c.applyDefaults(&config); err != nil {
+		return config, err
+	}
 	return config, nil
 }
 
@@ -169,7 +178,9 @@ func (c *RealConfigurator) getConfigFileFromUserConfigDir() (model.Config, error
 		return config, err
 	}
 
-	c.applyDefaults(&config)
+	if err := c.applyDefaults(&config); err != nil {
+		return config, err
+	}
 	return config, nil
 }
 

@@ -4,6 +4,7 @@ type (
 	Config struct {
 		Cache                bool                 `toml:"cache"`
 		StrictMode           bool                 `toml:"strict_mode"`
+		DefaultBackend       Backend              `toml:"default_backend"`
 		ImportPaths          []string             `toml:"import"`
 		DefaultSessionConfig DefaultSessionConfig `toml:"default_session"`
 		Blacklist            []string             `toml:"blacklist"`

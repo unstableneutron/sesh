@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/joshmedeski/sesh/v2/model"
 	"github.com/joshmedeski/sesh/v2/pathwrap"
 	"github.com/joshmedeski/sesh/v2/runtimewrap"
 	"github.com/stretchr/testify/assert"
@@ -203,4 +204,45 @@ func TestGetConfig_XDGConfigHomeNotSet(t *testing.T) {
 	assert.Equal(t, "echo test", config.DefaultSessionConfig.StartupCommand)
 	assert.Len(t, config.SessionConfigs, 1)
 	assert.Equal(t, "test-session", config.SessionConfigs[0].Name)
+}
+
+func TestGetConfig_DefaultBackend(t *testing.T) {
+	configFile := testdataPath("sesh.toml")
+	data, err := os.ReadFile(configFile)
+	require.NoError(t, err)
+
+	mockOs := &testOs{
+		homeDir: "/home/testuser",
+		files: map[string][]byte{
+			configFile: data,
+		},
+	}
+	mockPath := pathwrap.NewPath()
+	mockRuntime := &runtimewrap.MockRunTime{}
+
+	c := NewConfiguratorWithPath(mockOs, mockPath, mockRuntime, configFile)
+	config, err := c.GetConfig()
+
+	assert.NoError(t, err)
+	assert.Equal(t, model.BackendTmux, config.DefaultBackend)
+}
+
+func TestGetConfig_InvalidDefaultBackend(t *testing.T) {
+	invalidFile := testdataPath("invalid_default_backend.toml")
+	data, err := os.ReadFile(invalidFile)
+	require.NoError(t, err)
+
+	mockOs := &testOs{
+		homeDir: "/home/testuser",
+		files: map[string][]byte{
+			invalidFile: data,
+		},
+	}
+	mockPath := pathwrap.NewPath()
+	mockRuntime := &runtimewrap.MockRunTime{}
+
+	c := NewConfiguratorWithPath(mockOs, mockPath, mockRuntime, invalidFile)
+	_, err = c.GetConfig()
+
+	assert.ErrorContains(t, err, "invalid default_backend")
 }
