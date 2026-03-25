@@ -7,19 +7,19 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/joshmedeski/sesh/v2/cache"
 	"github.com/joshmedeski/sesh/v2/cloner"
 	"github.com/joshmedeski/sesh/v2/configurator"
 	"github.com/joshmedeski/sesh/v2/connector"
-	"github.com/joshmedeski/sesh/v2/model"
 	"github.com/joshmedeski/sesh/v2/dir"
 	"github.com/joshmedeski/sesh/v2/execwrap"
 	"github.com/joshmedeski/sesh/v2/git"
 	"github.com/joshmedeski/sesh/v2/home"
 	"github.com/joshmedeski/sesh/v2/icon"
 	"github.com/joshmedeski/sesh/v2/json"
-	"github.com/joshmedeski/sesh/v2/cache"
 	"github.com/joshmedeski/sesh/v2/lister"
 	"github.com/joshmedeski/sesh/v2/ls"
+	"github.com/joshmedeski/sesh/v2/model"
 	"github.com/joshmedeski/sesh/v2/namer"
 	"github.com/joshmedeski/sesh/v2/oswrap"
 	"github.com/joshmedeski/sesh/v2/pathwrap"
@@ -30,6 +30,7 @@ import (
 	"github.com/joshmedeski/sesh/v2/startup"
 	"github.com/joshmedeski/sesh/v2/tmux"
 	"github.com/joshmedeski/sesh/v2/tmuxinator"
+	"github.com/joshmedeski/sesh/v2/zmx"
 	"github.com/joshmedeski/sesh/v2/zoxide"
 )
 
@@ -46,6 +47,7 @@ type BaseDeps struct {
 	Git        git.Git
 	Dir        dir.Dir
 	Tmux       tmux.Tmux
+	Zmx        zmx.Zmx
 	Zoxide     zoxide.Zoxide
 	Tmuxinator tmuxinator.Tmuxinator
 }
@@ -79,6 +81,7 @@ func NewBaseDeps() *BaseDeps {
 	g := git.NewGit(sh)
 	d := dir.NewDir(os, g, path)
 	t := tmux.NewTmux(os, sh)
+	zm := zmx.NewZmx(os, sh)
 	z := zoxide.NewZoxide(sh)
 	ti := tmuxinator.NewTmuxinator(sh)
 
@@ -94,6 +97,7 @@ func NewBaseDeps() *BaseDeps {
 		Git:        g,
 		Dir:        d,
 		Tmux:       t,
+		Zmx:        zm,
 		Zoxide:     z,
 		Tmuxinator: ti,
 	}
@@ -109,7 +113,7 @@ func (b *BaseDeps) BuildAll(configPath string) (*Deps, error) {
 	slog.Debug("deps: BuildAll", "config", config)
 
 	l := ls.NewLs(config, b.Shell)
-	li := lister.NewLister(config, b.Home, b.Tmux, b.Zoxide, b.Tmuxinator)
+	li := lister.NewLister(config, b.Home, b.Tmux, b.Zmx, b.Zoxide, b.Tmuxinator)
 
 	var usedLister lister.Lister = li
 	var cachedLi *lister.CachingLister
@@ -121,7 +125,7 @@ func (b *BaseDeps) BuildAll(configPath string) (*Deps, error) {
 
 	s := startup.NewStartup(config, usedLister, b.Tmux, b.Home, b.Replacer)
 	n := namer.NewNamer(b.Path, b.Git, b.Home, config)
-	c := connector.NewConnector(config, b.Dir, b.Home, usedLister, n, s, b.Tmux, b.Zoxide, b.Tmuxinator)
+	c := connector.NewConnector(config, b.Dir, b.Home, usedLister, n, s, b.Tmux, b.Zmx, b.Zoxide, b.Tmuxinator)
 	ic := icon.NewIcon(config)
 	p := previewer.NewPreviewer(usedLister, b.Tmux, ic, b.Dir, b.Home, l, config, b.Shell)
 	cl := cloner.NewCloner(c, b.Git)

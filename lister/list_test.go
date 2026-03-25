@@ -162,7 +162,7 @@ func TestHideDuplicates(t *testing.T) {
 				SessionConfigs: tt.configSessions,
 			}
 
-			lister := NewLister(config, mockHome, mockTmux, mockZoxide, mockTmuxinator)
+			lister := NewLister(config, mockHome, mockTmux, nil, mockZoxide, mockTmuxinator)
 
 			// Call the actual List function with HideDuplicates
 			result, err := lister.List(ListOptions{

@@ -26,7 +26,7 @@ func TestListConfigSessions(t *testing.T) {
 			},
 		},
 	}
-	lister := NewLister(config, mockHome, mockTmux, mockZoxide, mockTmuxinator)
+	lister := NewLister(config, mockHome, mockTmux, nil, mockZoxide, mockTmuxinator)
 
 	realLister, ok := lister.(*RealLister)
 	if !ok {

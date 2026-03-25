@@ -5,6 +5,7 @@ import (
 	"github.com/joshmedeski/sesh/v2/model"
 	"github.com/joshmedeski/sesh/v2/tmux"
 	"github.com/joshmedeski/sesh/v2/tmuxinator"
+	"github.com/joshmedeski/sesh/v2/zmx"
 	"github.com/joshmedeski/sesh/v2/zoxide"
 )
 
@@ -23,10 +24,11 @@ type RealLister struct {
 	config     model.Config
 	home       home.Home
 	tmux       tmux.Tmux
+	zmx        zmx.Zmx
 	zoxide     zoxide.Zoxide
 	tmuxinator tmuxinator.Tmuxinator
 }
 
-func NewLister(config model.Config, home home.Home, tmux tmux.Tmux, zoxide zoxide.Zoxide, tmuxinator tmuxinator.Tmuxinator) Lister {
-	return &RealLister{config, home, tmux, zoxide, tmuxinator}
+func NewLister(config model.Config, home home.Home, tmux tmux.Tmux, zmx zmx.Zmx, zoxide zoxide.Zoxide, tmuxinator tmuxinator.Tmuxinator) Lister {
+	return &RealLister{config, home, tmux, zmx, zoxide, tmuxinator}
 }
