@@ -24,6 +24,7 @@ func listTmux(l *RealLister) (model.SeshSessions, error) {
 		orderedIndex = append(orderedIndex, key)
 		directory[key] = model.SeshSession{
 			Src:      "tmux",
+			Backend:  model.BackendTmux,
 			Name:     session.Name,
 			Path:     session.Path,
 			Attached: session.Attached,
@@ -88,6 +89,7 @@ func GetAttachedTmuxSession(l *RealLister) (model.SeshSession, bool) {
 		if session.Attached != 0 {
 			return model.SeshSession{
 				Src:      "tmux",
+				Backend:  model.BackendTmux,
 				Name:     session.Name,
 				Path:     session.Path,
 				Attached: session.Attached,

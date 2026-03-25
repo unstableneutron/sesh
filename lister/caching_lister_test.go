@@ -133,7 +133,9 @@ func TestCachingLister_DelegatesMethods(t *testing.T) {
 
 	session := model.SeshSession{Src: "tmux", Name: "test"}
 	inner.On("FindTmuxSession", "test").Return(session, true)
+	inner.On("FindZmxSession", "test").Return(model.SeshSession{Src: "zmx", Name: "test"}, true)
 	inner.On("GetAttachedTmuxSession").Return(session, true)
+	inner.On("GetAttachedZmxSession").Return(model.SeshSession{Src: "zmx", Name: "test"}, true)
 	inner.On("GetLastTmuxSession").Return(session, true)
 	inner.On("FindConfigSession", "test").Return(session, true)
 	inner.On("FindConfigWildcard", "/path").Return(model.WildcardConfig{}, false)
@@ -149,7 +151,13 @@ func TestCachingLister_DelegatesMethods(t *testing.T) {
 	s, ok = cl.GetAttachedTmuxSession()
 	assert.True(t, ok)
 
+	s, ok = cl.GetAttachedZmxSession()
+	assert.True(t, ok)
+
 	s, ok = cl.GetLastTmuxSession()
+	assert.True(t, ok)
+
+	s, ok = cl.FindZmxSession("test")
 	assert.True(t, ok)
 
 	s, ok = cl.FindConfigSession("test")
@@ -185,6 +193,7 @@ func TestCachingLister_HideAttached_ColdStart(t *testing.T) {
 	// Inner is always called with empty opts (cache stores full list)
 	inner.On("List", lister.ListOptions{}).Return(sessions, nil).Once()
 	inner.On("GetAttachedTmuxSession").Return(sessions.Directory["tmux:main"], true)
+	inner.On("GetAttachedZmxSession").Return(model.SeshSession{}, false)
 
 	cl := lister.NewCachingLister(inner, fc)
 	got, err := cl.List(lister.ListOptions{Tmux: true, HideAttached: true})
@@ -209,6 +218,7 @@ func TestCachingLister_HideAttached_WarmHit(t *testing.T) {
 	require.NoError(t, fc.Write(sessions))
 
 	inner.On("GetAttachedTmuxSession").Return(sessions.Directory["tmux:main"], true)
+	inner.On("GetAttachedZmxSession").Return(model.SeshSession{}, false)
 
 	cl := lister.NewCachingLister(inner, fc)
 	got, err := cl.List(lister.ListOptions{Tmux: true, HideAttached: true})
@@ -228,6 +238,7 @@ func TestCachingLister_HideAttached_NoAttachedSession(t *testing.T) {
 	require.NoError(t, fc.Write(sessions))
 
 	inner.On("GetAttachedTmuxSession").Return(model.SeshSession{}, false)
+	inner.On("GetAttachedZmxSession").Return(model.SeshSession{}, false)
 
 	cl := lister.NewCachingLister(inner, fc)
 	got, err := cl.List(lister.ListOptions{Tmux: true, HideAttached: true})

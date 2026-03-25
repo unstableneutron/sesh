@@ -27,6 +27,7 @@ func NewPickerCommand(base *BaseDeps) *cobra.Command {
 
 			config, _ := cmd.Flags().GetBool("config")
 			tmux, _ := cmd.Flags().GetBool("tmux")
+			zmx, _ := cmd.Flags().GetBool("zmx")
 			zoxide, _ := cmd.Flags().GetBool("zoxide")
 			hideAttached, _ := cmd.Flags().GetBool("hide-attached")
 			icons, _ := cmd.Flags().GetBool("icons")
@@ -43,6 +44,7 @@ func NewPickerCommand(base *BaseDeps) *cobra.Command {
 				HideAttached:   hideAttached,
 				Icons:          icons,
 				Tmux:           tmux,
+				Zmx:            zmx,
 				Zoxide:         zoxide,
 				Tmuxinator:     tmuxinator,
 				HideDuplicates: hideDuplicates,
@@ -81,6 +83,7 @@ func NewPickerCommand(base *BaseDeps) *cobra.Command {
 
 	cmd.Flags().BoolP("config", "c", false, "show configured sessions")
 	cmd.Flags().BoolP("tmux", "t", false, "show tmux sessions")
+	cmd.Flags().BoolP("zmx", "x", false, "show zmx sessions")
 	cmd.Flags().BoolP("zoxide", "z", false, "show zoxide results")
 	cmd.Flags().BoolP("hide-attached", "H", false, "don't show currently attached sessions")
 	cmd.Flags().BoolP("icons", "i", false, "show icons")

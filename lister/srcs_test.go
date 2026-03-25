@@ -7,34 +7,34 @@ import (
 )
 
 func TestSortSources(t *testing.T) {
-	defaultSources := []string{"tmux", "config", "tmuxinator", "zoxide"}
+	defaultSources := []string{"tmux", "zmx", "config", "tmuxinator", "zoxide"}
 	tests := map[string]struct {
 		sortOrder []string
 		expected  []string
 	}{
 		"a normal configuration": {
 			sortOrder: []string{"tmuxinator", "zoxide", "config", "tmux"},
-			expected:  []string{"tmuxinator", "zoxide", "config", "tmux"},
+			expected:  []string{"tmuxinator", "zoxide", "config", "tmux", "zmx"},
 		},
 		"empty configuration": {
 			sortOrder: []string{},
-			expected:  []string{"tmux", "config", "tmuxinator", "zoxide"},
+			expected:  []string{"tmux", "zmx", "config", "tmuxinator", "zoxide"},
 		},
 		"partial configuration": {
 			sortOrder: []string{"tmuxinator"},
-			expected:  []string{"tmuxinator", "tmux", "config", "zoxide"},
+			expected:  []string{"tmuxinator", "tmux", "zmx", "config", "zoxide"},
 		},
 		"superfluous elements": {
 			sortOrder: []string{"tmuxinator", "apple", "zoxide", "banana", "config", "chocolate", "tmux"},
-			expected:  []string{"tmuxinator", "zoxide", "config", "tmux"},
+			expected:  []string{"tmuxinator", "zoxide", "config", "tmux", "zmx"},
 		},
 		"configuration with capitalization": {
 			sortOrder: []string{"tMuxiNator", "Zoxide", "conFIg", "tmux"},
-			expected:  []string{"tmuxinator", "zoxide", "config", "tmux"},
+			expected:  []string{"tmuxinator", "zoxide", "config", "tmux", "zmx"},
 		},
 		"configuration with duplicate elements": {
 			sortOrder: []string{"tmuxinator", "zoxide", "tmuxinator", "config", "tmuxinator", "tmux", "tmuxinator", "tmuxinator"},
-			expected:  []string{"zoxide", "config", "tmux", "tmuxinator"},
+			expected:  []string{"zoxide", "config", "tmux", "tmuxinator", "zmx"},
 		},
 	}
 	for name, tt := range tests {
@@ -54,12 +54,17 @@ func TestSrcs(t *testing.T) {
 		{
 			name:     "All options are false",
 			opts:     ListOptions{},
-			expected: []string{"tmux", "config", "tmuxinator", "zoxide"},
+			expected: []string{"tmux", "zmx", "config", "tmuxinator", "zoxide"},
 		},
 		{
 			name:     "Only Tmux is true",
 			opts:     ListOptions{Tmux: true},
 			expected: []string{"tmux"},
+		},
+		{
+			name:     "Only Zmx is true",
+			opts:     ListOptions{Zmx: true},
+			expected: []string{"zmx"},
 		},
 		{
 			name:     "Only Config is true",
@@ -88,8 +93,8 @@ func TestSrcs(t *testing.T) {
 		},
 		{
 			name:     "All options are true",
-			opts:     ListOptions{Tmux: true, Config: true, Zoxide: true},
-			expected: []string{"tmux", "config", "zoxide"},
+			opts:     ListOptions{Tmux: true, Zmx: true, Config: true, Tmuxinator: true, Zoxide: true},
+			expected: []string{"tmux", "zmx", "config", "tmuxinator", "zoxide"},
 		},
 	}
 
@@ -99,4 +104,8 @@ func TestSrcs(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestSrcs_DefaultIncludesZmx(t *testing.T) {
+	assert.Equal(t, []string{"tmux", "zmx", "config", "tmuxinator", "zoxide"}, srcs(ListOptions{}))
 }

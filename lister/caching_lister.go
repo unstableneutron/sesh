@@ -100,12 +100,21 @@ func (cl *CachingLister) applyFilters(sessions model.SeshSessions, opts ListOpti
 
 	// 3. HideAttached: remove the currently attached tmux session.
 	if opts.HideAttached {
-		attached, ok := cl.inner.GetAttachedTmuxSession()
-		if ok {
-			for i, index := range filtered {
-				if sessions.Directory[index].Name == attached.Name {
-					filtered = slices.Delete(slices.Clone(filtered), i, i+1)
-					break
+		attachedSessions := make([]model.SeshSession, 0, 2)
+		if attached, ok := cl.inner.GetAttachedTmuxSession(); ok {
+			attachedSessions = append(attachedSessions, attached)
+		}
+		if attached, ok := cl.inner.GetAttachedZmxSession(); ok {
+			attachedSessions = append(attachedSessions, attached)
+		}
+		if len(attachedSessions) > 0 {
+			for _, attached := range attachedSessions {
+				for i, index := range filtered {
+					session := sessions.Directory[index]
+					if session.Src == attached.Src && session.Name == attached.Name {
+						filtered = slices.Delete(slices.Clone(filtered), i, i+1)
+						break
+					}
 				}
 			}
 		}
@@ -123,12 +132,15 @@ func (cl *CachingLister) applyFilters(sessions model.SeshSessions, opts ListOpti
 // sourceSet returns a set of allowed source names based on opts, or nil if
 // no source flags are set (meaning all sources are allowed).
 func sourceSet(opts ListOptions) map[string]bool {
-	if !opts.Tmux && !opts.Config && !opts.Zoxide && !opts.Tmuxinator {
+	if !opts.Tmux && !opts.Zmx && !opts.Config && !opts.Zoxide && !opts.Tmuxinator {
 		return nil
 	}
 	m := make(map[string]bool)
 	if opts.Tmux {
 		m["tmux"] = true
+	}
+	if opts.Zmx {
+		m["zmx"] = true
 	}
 	if opts.Config {
 		m["config"] = true
@@ -175,8 +187,16 @@ func (cl *CachingLister) FindTmuxSession(name string) (model.SeshSession, bool) 
 	return cl.inner.FindTmuxSession(name)
 }
 
+func (cl *CachingLister) FindZmxSession(name string) (model.SeshSession, bool) {
+	return cl.inner.FindZmxSession(name)
+}
+
 func (cl *CachingLister) GetAttachedTmuxSession() (model.SeshSession, bool) {
 	return cl.inner.GetAttachedTmuxSession()
+}
+
+func (cl *CachingLister) GetAttachedZmxSession() (model.SeshSession, bool) {
+	return cl.inner.GetAttachedZmxSession()
 }
 
 func (cl *CachingLister) GetLastTmuxSession() (model.SeshSession, bool) {

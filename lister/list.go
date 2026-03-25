@@ -15,6 +15,7 @@ type (
 		NoColor        bool
 		Json           bool
 		Tmux           bool
+		Zmx            bool
 		Zoxide         bool
 		Tmuxinator     bool
 		HideDuplicates bool
@@ -30,6 +31,7 @@ type strategyResult struct {
 
 var srcStrategies = map[string]srcStrategy{
 	"tmux":       listTmux,
+	"zmx":        listZmx,
 	"config":     listConfig,
 	"tmuxinator": listTmuxinator,
 	"zoxide":     listZoxide,
@@ -61,6 +63,9 @@ func (l *RealLister) List(opts ListOptions) (model.SeshSessions, error) {
 	resultsMap := make(map[string]model.SeshSessions)
 	for res := range resultsChan {
 		if res.err != nil {
+			if res.source == "zmx" && shouldIgnoreZmxListError(opts, res.err) {
+				continue
+			}
 			return model.SeshSessions{}, res.err
 		}
 		resultsMap[res.source] = res.sessions
@@ -108,11 +113,21 @@ func (l *RealLister) List(opts ListOptions) (model.SeshSessions, error) {
 	}
 
 	if opts.HideAttached {
-		attachedSession, _ := GetAttachedTmuxSession(l)
-		for i, index := range fullOrderedIndex {
-			if fullDirectory[index].Name == attachedSession.Name {
-				fullOrderedIndex = slices.Delete(fullOrderedIndex, i, i+1)
-				break
+		attachedSessions := make([]model.SeshSession, 0, 2)
+		if attachedTmux, ok := l.GetAttachedTmuxSession(); ok {
+			attachedSessions = append(attachedSessions, attachedTmux)
+		}
+		if attachedZmx, ok := l.GetAttachedZmxSession(); ok {
+			attachedSessions = append(attachedSessions, attachedZmx)
+		}
+
+		for _, attachedSession := range attachedSessions {
+			for i, index := range fullOrderedIndex {
+				session := fullDirectory[index]
+				if session.Src == attachedSession.Src && session.Name == attachedSession.Name {
+					fullOrderedIndex = slices.Delete(fullOrderedIndex, i, i+1)
+					break
+				}
 			}
 		}
 	}
@@ -121,4 +136,13 @@ func (l *RealLister) List(opts ListOptions) (model.SeshSessions, error) {
 		OrderedIndex: fullOrderedIndex,
 		Directory:    fullDirectory,
 	}, nil
+}
+
+func shouldIgnoreZmxListError(opts ListOptions, err error) bool {
+	if !isZmxUnavailableError(err) {
+		return false
+	}
+
+	requestedSpecificSource := opts.Tmux || opts.Zmx || opts.Config || opts.Zoxide || opts.Tmuxinator
+	return !requestedSpecificSource
 }

@@ -24,8 +24,9 @@ func listTmuxinator(l *RealLister) (model.SeshSessions, error) {
 		key := tmuxinatorKey(session.Name)
 		orderedIndex[i] = key
 		directory[key] = model.SeshSession{
-			Src:  "tmuxinator",
-			Name: session.Name,
+			Src:     "tmuxinator",
+			Backend: model.BackendTmux,
+			Name:    session.Name,
 		}
 	}
 	return model.SeshSessions{
